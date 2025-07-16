@@ -30,15 +30,29 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: {
-        values: ["student", "instructor", "admin"],
+        values: ["admin", "moderator", "member"],
         message: "Please select a valid role",
       },
-      default: "student",
+      default: "member",
+    },
+    designation: {
+      type: String,
+    },
+    batch: {
+      type: String,
+
+
+    },
+    department: {
+      type: String,
+
+
     },
     avatar: {
       type: String,
       default: "default-avatar.png",
     },
+     clubs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Club" }],
     bio: {
       type: String,
       maxLength: [200, "Bio cannot exceed 200 characters"],

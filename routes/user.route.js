@@ -4,7 +4,9 @@ import {
     changeUserPassword,
     createUserAccount,
     deleteUserAccount,
+    forgotPassword,
     getCurrentUserProfile,
+    resetPassword,
     signOutUser,
     updateUserProfile
 } from "../controllers/user.controller.js";
@@ -33,6 +35,8 @@ router.patch("/change-password",
     validatePasswordChange,
     changeUserPassword
 );
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password/:token", resetPassword);
 
 // Account management
 router.delete("/account", isAuthenticated, deleteUserAccount);

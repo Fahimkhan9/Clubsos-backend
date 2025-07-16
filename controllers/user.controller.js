@@ -88,8 +88,8 @@ export const getCurrentUserProfile = catchAsync(async (req, res) => {
  * @route PATCH /api/v1/users/profile
  */
 export const updateUserProfile = catchAsync(async (req, res) => {
-  const { name, email, bio } = req.body;
-  const updateData = { name, email: email?.toLowerCase(), bio };
+  const { name, email, bio,batch,department,designation } = req.body;
+  const updateData = { name, email: email?.toLowerCase(), bio,batch,department,designation  };
 
   // Handle avatar upload if provided
   if (req.file) {
