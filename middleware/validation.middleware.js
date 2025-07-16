@@ -100,3 +100,47 @@ export const validatePasswordChange = validate([
         .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])/)
         .withMessage('Password must contain at least one number, one uppercase letter, one lowercase letter, and one special character')
 ]);
+
+// Club-specific validations
+export const validateClubCreate = validate([
+    body("name")
+        .trim()
+        .notEmpty()
+        .withMessage("Club name is required")
+        .isLength({ min: 2, max: 100 })
+        .withMessage("Club name must be between 2 and 100 characters"),
+
+    body("university")
+        .trim()
+        .notEmpty()
+        .withMessage("University is required")
+        .isLength({ min: 2, max: 100 })
+        .withMessage("University must be between 2 and 100 characters"),
+
+    body("sessionYear")
+        .trim()
+        .notEmpty()
+        .withMessage("Session year is required")
+        .matches(/^\d{4}-\d{4}$/)
+        .withMessage("Session year must be in format YYYY-YYYY (e.g., 2023-2024)")
+]);
+
+export const validateClubUpdate = validate([
+    body("name")
+        .optional()
+        .trim()
+        .isLength({ min: 2, max: 100 })
+        .withMessage("Club name must be between 2 and 100 characters"),
+
+    body("university")
+        .optional()
+        .trim()
+        .isLength({ min: 2, max: 100 })
+        .withMessage("University must be between 2 and 100 characters"),
+
+    body("sessionYear")
+        .optional()
+        .trim()
+        .matches(/^\d{4}-\d{4}$/)
+        .withMessage("Session year must be in format YYYY-YYYY")
+]);

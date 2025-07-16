@@ -2,6 +2,8 @@ import mongoose from 'mongoose'
 
 const clubSchema = new mongoose.Schema({
   name: { type: String, required: true },
+  logo:{type:String,default:'default-logo.png'},
+  about:{type:String},
   university: { type: String, required: true },
   sessionYear: { type: String, required: true }, // e.g., 2024-2025
     members: [
@@ -9,7 +11,7 @@ const clubSchema = new mongoose.Schema({
       user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
       role: {
         type: String,
-        enum: ["admin", "member"],
+        enum: ["admin", "member",'moderator'],
         default: "member",
       },
       designation: {
@@ -23,4 +25,4 @@ const clubSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
-export const Club=mongoose.Model('Club',clubSchema)
+export const Club=mongoose.model('Club',clubSchema)

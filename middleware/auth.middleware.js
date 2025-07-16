@@ -1,23 +1,21 @@
+
+import { Club } from "../models/club.model.js";
 import jwt from "jsonwebtoken";
 import { AppError } from "./error.middleware.js";
 import { catchAsync } from "./error.middleware.js";
 import { User } from "../models/user.model.js";
 
+// Checks if user is logged in via token in cookies
 export const isAuthenticated = catchAsync(async (req, res, next) => {
-  // Check if token exists in cookies
-  const token = req.cookies.token;
+  const token = req.cookies?.token;
+
   if (!token) {
-    throw new AppError(
-      "You are not logged in. Please log in to get access.",
-      401
-    );
+    throw new AppError("You are not logged in. Please log in to get access.", 401);
   }
 
   try {
-    // Verify token
-    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Add user ID to request
     req.id = decoded.userId;
     const user = await User.findById(req.id);
     if (!user) {
@@ -25,44 +23,49 @@ export const isAuthenticated = catchAsync(async (req, res, next) => {
     }
 
     req.user = user;
-
     next();
   } catch (error) {
     if (error.name === "JsonWebTokenError") {
       throw new AppError("Invalid token. Please log in again.", 401);
-    }
-    if (error.name === "TokenExpiredError") {
+    } else if (error.name === "TokenExpiredError") {
       throw new AppError("Your token has expired. Please log in again.", 401);
     }
     throw error;
   }
 });
 
-// Middleware for role-based access control
-export const restrictTo = (...roles) => {
+/**
+ * Role-based middleware that checks if the authenticated user
+ * has one of the allowed roles in the specific club
+ */
+export const restrictToClubRole = (...allowedRoles) => {
   return catchAsync(async (req, res, next) => {
-    // roles is an array ['admin', 'instructor']
-    if (!roles.includes(req.user.role)) {
-      throw new AppError(
-        "You do not have permission to perform this action",
-        403
-      );
+    const clubId = req.params.clubId || req.body.clubId || req.query.clubId;
+
+    if (!clubId) {
+      throw new AppError("Club ID is required for role-based access", 400);
     }
+
+    const club = await Club.findById(clubId);
+    if (!club) {
+      throw new AppError("Club not found", 404);
+    }
+
+    const member = club.members.find((m) => m.user.toString() === req.id);
+
+    if (!member) {
+      throw new AppError("You are not a member of this club", 403);
+    }
+
+    if (!allowedRoles.includes(member.role)) {
+      throw new AppError("You do not have permission to perform this action", 403);
+    }
+
+    // Pass additional info to downstream controllers if needed
+    req.club = club;
+    req.clubRole = member.role;
+    req.clubDesignation = member.designation;
+
     next();
   });
 };
-
-// Optional authentication middleware
-export const optionalAuth = catchAsync(async (req, res, next) => {
-  try {
-    const token = req.cookies.token;
-    if (token) {
-      const decoded = await jwt.verify(token, process.env.JWT_SECRET);
-      req.id = decoded.userId;
-    }
-    next();
-  } catch (error) {
-    // If token is invalid, just continue without authentication
-    next();
-  }
-});

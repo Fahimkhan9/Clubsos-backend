@@ -5,32 +5,61 @@ import { deleteMediaFromCloudinary, uploadMedia } from "../utils/cloudinary.js";
 import { catchAsync } from "../middleware/error.middleware.js";
 import { AppError } from "../middleware/error.middleware.js";
 import crypto from "crypto";
+import { Club } from "../models/club.model.js";
+import { Invite } from "../models/invite.model.js";
+
 
 /**
  * Create a new user account
  * @route POST /api/v1/users/signup
  */
 export const createUserAccount = catchAsync(async (req, res) => {
-  const { name, email, password,} = req.body;
+  const { name, email, password } = req.body;
+  const inviteToken = req.query.inviteToken || req.body.inviteToken;
 
-  // Check if user already exists
+  // Existing user check as usual
   const existingUser = await User.findOne({ email: email.toLowerCase() });
   if (existingUser) {
     throw new AppError("User already exists with this email", 400);
   }
 
-  // Create user (password hashing is handled by the model)
+  // Create new user
   const user = await User.create({
     name,
     email: email.toLowerCase(),
     password,
   });
 
-  // Update last active and generate token
+  // If invite token present, validate and add user to club
+  if (inviteToken) {
+    const invite = await Invite.findOne({
+      inviteToken,
+      email: email.toLowerCase(),
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (!invite) {
+      throw new AppError("Invalid or expired invite token", 400);
+    }
+
+    const club = await Club.findById(invite.clubId);
+    if (club) {
+      club.members.push({
+        user: user._id,
+        role: invite.role,
+        designation: invite.designation,
+      });
+      await club.save();
+    }
+
+    // Remove invite after use
+    await Invite.deleteOne({ _id: invite._id });
+  }
+
+  // Continue with your token generation and response as before
   await user.updateLastActive();
   generateToken(res, user._id, "Account created successfully");
 });
-
 /**
  * Authenticate user and get token
  * @route POST /api/v1/users/signin
