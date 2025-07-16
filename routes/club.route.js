@@ -6,14 +6,21 @@ import {
   updateClub,
   deleteClub,
   inviteMemberToClub,
+  acceptInvitation,
+  removeMemberFromClub,
+  updateMemberRole,
 } from "../controllers/club.controller.js";
+
 import {
   isAuthenticated,
   restrictToClubRole,
 } from "../middleware/auth.middleware.js";
+
 import {
   validateClubCreate,
   validateClubUpdate,
+  validateMemberInvite,
+  validateMemberUpdate,      // you may create this
   commonValidations,
 } from "../middleware/validation.middleware.js";
 
@@ -37,6 +44,7 @@ router.delete(
   commonValidations.objectId("clubId"),
   deleteClub
 );
+
 router.post(
   "/:clubId/invite",
   restrictToClubRole("admin"),
@@ -44,5 +52,28 @@ router.post(
   validateMemberInvite,
   inviteMemberToClub
 );
+
 router.post("/accept", acceptInvitation);
+
+
+
+
+router.delete(
+  "/:clubId/members/:memberId",
+  restrictToClubRole("admin"),
+  commonValidations.objectId("clubId"),
+  commonValidations.objectId("memberId"),
+  removeMemberFromClub
+);
+
+// Update a member's role/designation (admin only)
+router.patch(
+  "/:clubId/members/:memberId",
+  restrictToClubRole("admin"),
+  commonValidations.objectId("clubId"),
+  commonValidations.objectId("memberId"),
+  validateMemberUpdate,  // You can define this middleware for input validation
+  updateMemberRole
+);
+
 export default router;

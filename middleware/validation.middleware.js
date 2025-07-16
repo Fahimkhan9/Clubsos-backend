@@ -144,3 +144,39 @@ export const validateClubUpdate = validate([
         .matches(/^\d{4}-\d{4}$/)
         .withMessage("Session year must be in format YYYY-YYYY")
 ]);
+
+export const validateMemberInvite = validate([
+  body('email')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Valid email is required'),
+
+  body('role')
+    .notEmpty()
+    .withMessage('Role is required')
+    .isIn(['admin', 'moderator', 'member'])
+    .withMessage('Role must be one of admin, moderator, or member'),
+
+  body('designation')
+    .optional()
+    .isString()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Designation must be 2 to 50 characters long')
+]);
+
+export const validateMemberUpdate = validate([
+  body('userId')
+    .isMongoId()
+    .withMessage('Valid userId is required'),
+
+  body('role')
+    .optional()
+    .isIn(['admin', 'moderator', 'member'])
+    .withMessage('Role must be one of admin, moderator, or member'),
+
+  body('designation')
+    .optional()
+    .isString()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Designation must be 2 to 50 characters long')
+]);

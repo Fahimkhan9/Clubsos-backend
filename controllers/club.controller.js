@@ -1,6 +1,5 @@
 import { Club } from "../models/club.model.js";
 import {Invite} from '../models/invite.model.js';
-import {  Membership } from "../models/membership.model.js";
 import { AppError } from "../middleware/error.middleware.js";
 import { catchAsync } from "../middleware/error.middleware.js";
 import { deleteMediaFromCloudinary, uploadMedia } from "../utils/cloudinary.js";
@@ -291,5 +290,114 @@ export const acceptInvitation = catchAsync(async (req, res) => {
   res.status(200).json({
     success: true,
     message: `You have successfully joined the club "${club.name}"`,
+  });
+});
+
+/**
+ * Remove a member from a club (admin only)
+ * @route DELETE /api/v1/clubs/:clubId/members/:memberId
+ */
+export const removeMemberFromClub = catchAsync(async (req, res) => {
+  const { clubId, memberId } = req.params;
+  const userId = req.id; // current logged in user
+
+  const club = await Club.findById(clubId);
+  if (!club) throw new AppError("Club not found", 404);
+
+  // Check if requester is admin of the club
+  const requesterMembership = club.members.find(
+    (m) => m.user.toString() === userId.toString()
+  );
+  if (!requesterMembership || requesterMembership.role !== "admin") {
+    throw new AppError("Unauthorized: Only admins can remove members", 403);
+  }
+
+  // Prevent removing self (optional)
+  if (memberId === userId.toString()) {
+    throw new AppError("Admins cannot remove themselves", 400);
+  }
+
+  // Check if member exists
+  const memberIndex = club.members.findIndex(
+    (m) => m.user.toString() === memberId.toString()
+  );
+  if (memberIndex === -1) {
+    throw new AppError("Member not found in this club", 404);
+  }
+
+  // Remove member from club members array
+  club.members.splice(memberIndex, 1);
+  await club.save();
+
+  // Also remove club reference from user's clubs array
+  const user = await User.findById(memberId);
+  if (user) {
+    user.clubs = user.clubs.filter(
+      (clubRef) => clubRef.toString() !== clubId.toString()
+    );
+    await user.save();
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Member removed successfully",
+  });
+});
+
+/**
+ * Update a member's role and designation (admin only)
+ * @route PATCH /api/v1/clubs/:clubId/members/:memberId
+ * @body { role, designation }
+ */
+export const updateMemberRole = catchAsync(async (req, res) => {
+  const { clubId, memberId } = req.params;
+  const { role, designation } = req.body;
+  const userId = req.id; // current logged in user
+
+  const validRoles = ["admin", "moderator", "member"];
+  if (role && !validRoles.includes(role)) {
+    throw new AppError("Invalid role specified", 400);
+  }
+
+  const club = await Club.findById(clubId);
+  if (!club) throw new AppError("Club not found", 404);
+
+  // Check if requester is admin of the club
+  const requesterMembership = club.members.find(
+    (m) => m.user.toString() === userId.toString()
+  );
+  if (!requesterMembership || requesterMembership.role !== "admin") {
+    throw new AppError("Unauthorized: Only admins can update member roles", 403);
+  }
+
+  // Find member to update
+  const member = club.members.find(
+    (m) => m.user.toString() === memberId.toString()
+  );
+  if (!member) {
+    throw new AppError("Member not found in this club", 404);
+  }
+
+  // Prevent demoting last admin (optional)
+  if (member.role === "admin" && role !== "admin") {
+    // Check if there is another admin
+    const otherAdmins = club.members.filter(
+      (m) => m.role === "admin" && m.user.toString() !== memberId.toString()
+    );
+    if (otherAdmins.length === 0) {
+      throw new AppError("Cannot remove admin role from the last admin", 400);
+    }
+  }
+
+  // Update role and designation if provided
+  if (role) member.role = role;
+  if (designation !== undefined) member.designation = designation;
+
+  await club.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Member updated successfully",
+    data: member,
   });
 });
