@@ -17,10 +17,9 @@ import { validateSignup, validateSignin, validatePasswordChange } from "../middl
 const router = express.Router();
 
 // Auth routes
-router.post("/signup", validateSignup, createUserAccount);
-router.post("/signin", validateSignin, authenticateUser);
-router.post("/signout", signOutUser);
-
+router.post("/register", validateSignup, createUserAccount);
+router.post("/login", validateSignin, authenticateUser);
+router.post("/logout", signOutUser);
 // Profile routes
 router.get("/profile", isAuthenticated, getCurrentUserProfile);
 router.patch("/profile", 
