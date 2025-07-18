@@ -11,7 +11,14 @@ import {
   updateMemberRole,
   getMembersOfClub,
 } from "../controllers/club.controller.js";
-
+import {
+createBudget,
+getClubBudgets,
+getBudgetSummary,
+deleteBudget,
+updateBudget,
+getMonthlyBudgetSummart
+} from '../controllers/budget.controller.js'
 import {
   isAuthenticated,
   restrictToClubRole,
@@ -82,5 +89,14 @@ router.patch(
   // validateMemberUpdate,  // You can define this middleware for input validation
   updateMemberRole
 );
+
+
+// budget routes
+router.post('/:clubId/budget', restrictToClubRole('admin','moderator'), createBudget);
+router.get('/:clubId/budget', restrictToClubRole('admin','moderator'), getClubBudgets);
+router.get('/:clubId/budget/summary', restrictToClubRole('admin','moderator'), getBudgetSummary);
+router.patch(':clubId/budget/:id', restrictToClubRole('admin','moderator'), updateBudget);
+router.delete(':clubId/budget/:id', restrictToClubRole('admin','moderator'), deleteBudget);
+router.get('/:clubId/budget/monthly',getMonthlyBudgetSummart)
 
 export default router;
