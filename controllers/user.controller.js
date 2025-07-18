@@ -117,14 +117,18 @@ export const getCurrentUserProfile = catchAsync(async (req, res) => {
  * @route PATCH /api/v1/users/profile
  */
 export const updateUserProfile = catchAsync(async (req, res) => {
-  const { name, email, bio,batch,department,designation } = req.body;
-  const updateData = { name, email: email?.toLowerCase(), bio,batch,department,designation  };
+  const { name, email, bio,batch,department } = req.body;
+  const updateData = { name, email: email?.toLowerCase(), bio,batch,department  };
+console.log("file",req.file);
 
   // Handle avatar upload if provided
   if (req.file) {
     const avatarResult = await uploadMedia(req.file.path);
+    console.log("upload",avatarResult?.secure_url);
+    
     updateData.avatar = avatarResult?.secure_url || req.file.path;
-
+    // console.log(req.file);
+    
     // Delete old avatar if it's not the default
     const user = await User.findById(req.id);
     if (user.avatar && user.avatar !== "default-avatar.png") {
@@ -141,7 +145,7 @@ export const updateUserProfile = catchAsync(async (req, res) => {
   if (!updatedUser) {
     throw new AppError("User not found", 404);
   }
-
+  console.log(updatedUser)
   res.status(200).json({
     success: true,
     message: "Profile updated successfully",

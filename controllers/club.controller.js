@@ -9,14 +9,16 @@ import { User } from "../models/user.model.js";
  * @route POST /api/v1/clubs
  */
 export const createClub = catchAsync(async (req, res) => {
-  const { name, university, sessionYear, designation } = req.body;
-
+  const { name, university, sessionYear, designation,about } = req.body;
+  let  logoResult='default-logo.png';
   const existingClub = await Club.findOne({ name, university });
   if (existingClub) {
     throw new AppError("A club with this name already exists in this university", 400);
   }
-
-  const club = await Club.create({ name, university, sessionYear, createdBy: req.id });
+if(req.file){
+logoResult= (await uploadMedia(req.file.path))?.secure_url || "default-logo.png";
+}
+  const club = await Club.create({ name,about,logo:logoResult, university, sessionYear, createdBy: req.id });
 
   
   club.members.push({
@@ -26,7 +28,8 @@ export const createClub = catchAsync(async (req, res) => {
     joinedAt: new Date(),
   });
   await club.save();
-
+  console.log(club);
+  
   res.status(201).json({
     success: true,
     message: "Club created successfully",
@@ -207,7 +210,9 @@ export const inviteMemberToClub = catchAsync(async (req, res) => {
   const invite = await Invite.createInvite({ email, clubId, role, designation });
 
   // Send invitation email with inviteToken
-  await sendInviteEmail(email, invite.inviteToken);
+  console.log(`Invitation sent to ${email} with token: ${invite.inviteToken}`);
+  
+  // await sendInviteEmail(email, invite.inviteToken);
 
   res.status(200).json({
     success: true,
@@ -401,3 +406,43 @@ export const updateMemberRole = catchAsync(async (req, res) => {
     data: member,
   });
 });
+
+/**
+ * Get a member's role and designation (admin only)
+ * @route GET /api/v1/clubs/:clubId/members
+ * 
+ */
+export const getMembersOfClub = catchAsync(async (req, res) => {
+  const { clubId } = req.params;
+  const userId = req.id; // current logged in user
+
+  const club = await Club.findById(clubId);
+  if (!club) throw new AppError("Club not found", 404);
+
+  // Check if requester is member of the club
+  const requesterMembership = club.members.find(
+    (m) => m.user.toString() === userId.toString()
+  );
+  if (!requesterMembership) {
+    throw new AppError("You are not a member of this club", 403);
+  }
+//  get user details for each member
+  const membersWithDetails = await Promise.all(
+    club.members.map(async (member) => {
+      const user = await User.findById(member.user).select("name email profilePicture");
+      return {
+        ...member.toObject(),
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          avatar: user.profilePicture || "default-profile.png",
+        },
+      }}
+  ))
+ console.log(membersWithDetails);
+  res.status(200).json({
+    success: true,
+    data:membersWithDetails,
+  });
+})

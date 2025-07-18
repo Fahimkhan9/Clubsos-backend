@@ -9,9 +9,7 @@ import xss from "xss-clean";
 import hpp from "hpp";
 import rateLimit from "express-rate-limit";
 import connectDB from "./database/db.js";
-import userRoute from "./routes/user.route.js";
 
-import healthRoute from "./routes/health.routes.js";
 
 // Load environment variables
 dotenv.config();
@@ -65,7 +63,11 @@ app.use(
 );
 
 // API Routes
+import userRoute from "./routes/user.route.js";
+import clubRoute from "./routes/club.route.js";
+import healthRoute from "./routes/health.routes.js";
 app.use("/api/v1/user", userRoute);
+app.use('/api/v1/club',clubRoute);
 app.use("/health", healthRoute);
 
 // 404 Handler

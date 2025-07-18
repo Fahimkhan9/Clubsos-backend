@@ -9,6 +9,7 @@ import {
   acceptInvitation,
   removeMemberFromClub,
   updateMemberRole,
+  getMembersOfClub,
 } from "../controllers/club.controller.js";
 
 import {
@@ -23,12 +24,13 @@ import {
   validateMemberUpdate,      // you may create this
   commonValidations,
 } from "../middleware/validation.middleware.js";
+import upload from "../utils/multer.js";
 
 const router = express.Router();
 
 router.use(isAuthenticated);
 
-router.post("/", validateClubCreate, createClub);
+router.post("/", validateClubCreate,upload.single('logo'), createClub);
 router.get("/my", getMyClubs);
 router.get("/:clubId", commonValidations.objectId("clubId"), getClubById);
 router.patch(
@@ -47,7 +49,7 @@ router.delete(
 
 router.post(
   "/:clubId/invite",
-  restrictToClubRole("admin"),
+  restrictToClubRole("admin","moderator"),
   commonValidations.objectId("clubId"),
   validateMemberInvite,
   inviteMemberToClub
@@ -55,7 +57,12 @@ router.post(
 
 router.post("/accept", acceptInvitation);
 
-
+router.get(
+  "/:clubId/members",
+  restrictToClubRole("admin","moderator"),
+  commonValidations.objectId("clubId"),
+  getMembersOfClub
+);
 
 
 router.delete(
@@ -72,7 +79,7 @@ router.patch(
   restrictToClubRole("admin"),
   commonValidations.objectId("clubId"),
   commonValidations.objectId("memberId"),
-  validateMemberUpdate,  // You can define this middleware for input validation
+  // validateMemberUpdate,  // You can define this middleware for input validation
   updateMemberRole
 );
 

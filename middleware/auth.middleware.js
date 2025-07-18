@@ -8,7 +8,7 @@ import { User } from "../models/user.model.js";
 // Checks if user is logged in via token in cookies
 export const isAuthenticated = catchAsync(async (req, res, next) => {
   const token = req.cookies?.token;
-console.log(token);
+
 
   if (!token) {
     throw new AppError("You are not logged in. Please log in to get access.", 401);

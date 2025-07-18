@@ -121,8 +121,6 @@ export const validateClubCreate = validate([
         .trim()
         .notEmpty()
         .withMessage("Session year is required")
-        .matches(/^\d{4}-\d{4}$/)
-        .withMessage("Session year must be in format YYYY-YYYY (e.g., 2023-2024)")
 ]);
 
 export const validateClubUpdate = validate([
