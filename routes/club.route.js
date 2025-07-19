@@ -32,6 +32,7 @@ import {
   commonValidations,
 } from "../middleware/validation.middleware.js";
 import upload from "../utils/multer.js";
+import { createEvent, deleteEvent, getClubEvents, getEventById, updateEvent } from "../controllers/event.controller.js";
 
 const router = express.Router();
 
@@ -66,7 +67,6 @@ router.post("/accept", acceptInvitation);
 
 router.get(
   "/:clubId/members",
-  restrictToClubRole("admin","moderator"),
   commonValidations.objectId("clubId"),
   getMembersOfClub
 );
@@ -99,4 +99,11 @@ router.patch(':clubId/budget/:id', restrictToClubRole('admin','moderator'), upda
 router.delete(':clubId/budget/:id', restrictToClubRole('admin','moderator'), deleteBudget);
 router.get('/:clubId/budget/monthly',getMonthlyBudgetSummart)
 
+// event routes
+router.post('/:clubId/event',restrictToClubRole('admin','moderator'),upload.array('attachments'),createEvent)
+
+router.get('/:clubId/event',getClubEvents)
+router.get('/event/:id',getEventById)
+router.patch('/:clubId/event/:id',restrictToClubRole('admin','moderator'),updateEvent)
+router.delete('/:clubId/event/:id',restrictToClubRole('admin','moderator'),deleteEvent)
 export default router;

@@ -119,11 +119,14 @@ export const getCurrentUserProfile = catchAsync(async (req, res) => {
 export const updateUserProfile = catchAsync(async (req, res) => {
   const { name, email, bio,batch,department } = req.body;
   const updateData = { name, email: email?.toLowerCase(), bio,batch,department  };
-console.log("file",req.file);
+
 
   // Handle avatar upload if provided
   if (req.file) {
-    const avatarResult = await uploadMedia(req.file.path);
+    console.log(req.file)
+   
+    
+    const avatarResult = await uploadMedia(req.file,'avatars');
     console.log("upload",avatarResult?.secure_url);
     
     updateData.avatar = avatarResult?.secure_url || req.file.path;

@@ -65,11 +65,12 @@ app.use(
 // API Routes
 import userRoute from "./routes/user.route.js";
 import clubRoute from "./routes/club.route.js";
+import attendanceRoutes from './routes/attendance.route.js';
 
 import healthRoute from "./routes/health.routes.js";
 app.use("/api/v1/user", userRoute);
 app.use('/api/v1/club',clubRoute);
-
+app.use('/api/v1/attendance', attendanceRoutes);
 app.use("/health", healthRoute);
 
 // 404 Handler
