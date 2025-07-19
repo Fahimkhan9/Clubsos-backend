@@ -2,6 +2,7 @@ import express from "express";
 import {
   createClub,
   getMyClubs,
+  test,
   getClubById,
   updateClub,
   deleteClub,
@@ -40,6 +41,7 @@ router.use(isAuthenticated);
 
 router.post("/", validateClubCreate,upload.single('logo'), createClub);
 router.get("/my", getMyClubs);
+router.get('/mys',test)
 router.get("/:clubId", commonValidations.objectId("clubId"), getClubById);
 router.patch(
   "/:clubId",

@@ -4,6 +4,33 @@ import { AppError } from "../middleware/error.middleware.js";
 import { catchAsync } from "../middleware/error.middleware.js";
 import { deleteMediaFromCloudinary, uploadMedia } from "../utils/cloudinary.js";
 import { User } from "../models/user.model.js";
+
+export const test = catchAsync(async (req, res) => {
+  // Find clubs where the current user is a member
+  const clubs = await Club.find({ "members.user": req.id }).populate({
+    path: "members.user",
+    select: "name email", // select only needed fields from user
+  });
+
+  // Map clubs to include role & designation from members array for current user
+  const clubsWithRole = clubs.map((club) => {
+    const memberInfo = club.members.find(
+      (m) => m.user?._id.toString() === req.id.toString()
+    );
+
+    return {
+      ...club._doc,
+      role: memberInfo?.role,
+      designation: memberInfo?.designation,
+    };
+  });
+
+  res.status(200).json({
+    success: true,
+    data: clubsWithRole,
+  });
+});
+
 /**
  * Create a new club
  * @route POST /api/v1/clubs
