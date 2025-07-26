@@ -1,4 +1,5 @@
-import mongoose from 'mongoose'
+// models/task.model.js
+import mongoose from 'mongoose';
 
 const taskSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -10,8 +11,7 @@ const taskSchema = new mongoose.Schema({
   },
   event: { type: mongoose.Schema.Types.ObjectId, ref: "Event", required: true },
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 }, { timestamps: true });
 
-
-
-export const Task=mongoose.Model('Task',taskSchema)
+export const Task = mongoose.model('Task', taskSchema);

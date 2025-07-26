@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
-
+import dotenv from 'dotenv'
+dotenv.config()
 const MAX_RETRIES = 3;
 const RETRY_INTERVAL = 5000; // 5 seconds
-
+console.log(process.env.MONGO_URI)
 class DatabaseConnection {
     constructor() {
         this.retryCount = 0;
@@ -40,8 +41,7 @@ class DatabaseConnection {
             }
 
             const connectionOptions = {
-                useNewUrlParser: true,
-                useUnifiedTopology: true,
+                
                 maxPoolSize: 10,
                 serverSelectionTimeoutMS: 5000,
                 socketTimeoutMS: 45000,

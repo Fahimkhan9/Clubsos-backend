@@ -43,6 +43,7 @@ export const getClubEvents = catchAsync(async (req, res) => {
   const events = await Event.find({ club: clubId })
     .populate("organizers", "name email")
     .sort({ date: -1 });
+console.log(events);
 
   res.json({ success: true, data: events });
 });
