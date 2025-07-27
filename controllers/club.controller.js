@@ -5,7 +5,7 @@ import { catchAsync } from "../middleware/error.middleware.js";
 import { deleteMediaFromCloudinary, uploadMedia } from "../utils/cloudinary.js";
 import { User } from "../models/user.model.js";
 
-export const test = catchAsync(async (req, res) => {
+export const getMyClubsV2 = catchAsync(async (req, res) => {
   // Find clubs where the current user is a member
   const clubs = await Club.find({ "members.user": req.id }).populate({
     path: "members.user",

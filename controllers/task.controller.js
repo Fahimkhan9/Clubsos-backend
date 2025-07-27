@@ -87,3 +87,17 @@ export const deleteTask = catchAsync(async (req, res) => {
 
   res.status(200).json({ success: true, message: "Task deleted" });
 });
+
+// ...existing code...
+
+// Get all tasks assigned to the current user
+export const getMyTasks = catchAsync(async (req, res) => {
+   const userId = req.user._id;
+
+  const tasks = await Task.find({ assignedTo: userId })
+    .populate("event", "name club")
+    .populate("assignedBy", "name email")
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({ success: true, data: tasks });
+});

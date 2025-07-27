@@ -83,3 +83,14 @@ export const deleteEvent = catchAsync(async (req, res) => {
 
   res.json({ success: true, message: "Event deleted" });
 });
+
+export const getUpcomingEvents = catchAsync(async (req, res) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Ensure comparison is from midnight today
+
+  const events = await Event.find({ date: { $gte: today } })
+    .populate("organizers", "name email") // Adjust path if your model differs
+    .sort({ date: 1 }); // Soonest events first
+
+  res.status(200).json({ success: true, data: events });
+});
