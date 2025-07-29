@@ -7,6 +7,7 @@ import { AppError } from "../middleware/error.middleware.js";
 import crypto from "crypto";
 import { Club } from "../models/club.model.js";
 import { Invite } from "../models/invite.model.js";
+import { sendEmail } from "../utils/sendForgotEmail.js";
 
 
 /**
@@ -200,12 +201,31 @@ export const forgotPassword = catchAsync(async (req, res) => {
   const resetToken = user.getResetPasswordToken();
   await user.save({ validateBeforeSave: false });
 
-  // TODO: Send reset token via email
+  // Construct reset URL
+  const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+  const message = `
+    <p>You requested a password reset.</p>
+    <p>Click the link below to reset your password:</p>
+    <a href="${resetUrl}" target="_blank">${resetUrl}</a>
+    <p>This link will expire in 10 minutes.</p>
+  `;
+console.log(resetUrl)
+  try {
+    await sendEmail(user.email, "Password Reset", message);
 
-  res.status(200).json({
-    success: true,
-    message: "Password reset instructions sent to email",
-  });
+    res.status(200).json({
+      success: true,
+      message: "Password reset instructions sent to your email",
+    });
+  } catch (err) {
+    // Optional: clear the token if email fails
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    console.error(err);
+    throw new AppError("Failed to send email. Try again later.", 500);
+  }
 });
 
 /**
@@ -216,9 +236,11 @@ export const resetPassword = catchAsync(async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
 
-  // Get user by reset token
+  // Hash token and find user
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
   const user = await User.findOne({
-    resetPasswordToken: crypto.createHash("sha256").update(token).digest("hex"),
+    resetPasswordToken: hashedToken,
     resetPasswordExpire: { $gt: Date.now() },
   });
 
@@ -226,7 +248,7 @@ export const resetPassword = catchAsync(async (req, res) => {
     throw new AppError("Invalid or expired reset token", 400);
   }
 
-  // Update password and clear reset token
+  // Set new password and clear token fields
   user.password = password;
   user.resetPasswordToken = undefined;
   user.resetPasswordExpire = undefined;
