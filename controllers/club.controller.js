@@ -37,15 +37,18 @@ export const getMyClubsV2 = catchAsync(async (req, res) => {
  */
 export const createClub = catchAsync(async (req, res) => {
   const { name, university, sessionYear, designation,about } = req.body;
-  let  logoResult='default-logo.png';
+  let  logo='default-logo.png';
   const existingClub = await Club.findOne({ name, university });
   if (existingClub) {
     throw new AppError("A club with this name already exists in this university", 400);
   }
 if(req.file){
-logoResult= (await uploadMedia(req.file.path))?.secure_url || "default-logo.png";
+  console.log('REQ.FILE:', req.file); // Make sure this logs
+  const logoResult = await uploadMedia(req.file, 'logos');
+  console.log('Cloudinary Upload Result:', logoResult?.secure_url);
+  logo = logoResult?.secure_url || logo;
 }
-  const club = await Club.create({ name,about,logo:logoResult, university, sessionYear, createdBy: req.id });
+  const club = await Club.create({ name,about,logo, university, sessionYear, createdBy: req.id });
 
   
   club.members.push({
@@ -240,10 +243,13 @@ export const inviteMemberToClub = catchAsync(async (req, res) => {
   console.log(`Invitation sent to ${email} with token: ${invite.inviteToken}`);
   
   // await sendInviteEmail(email, invite.inviteToken);
+  const inviteLink=`${process.env.CLIENT_URL}/accept?token=${invite.inviteToken}`
+
 
   res.status(200).json({
     success: true,
     message: `Invitation sent to ${email}.`,
+    inviteLink,
   });
 });
 

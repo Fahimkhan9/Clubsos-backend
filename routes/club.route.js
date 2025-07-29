@@ -39,7 +39,7 @@ const router = express.Router();
 
 router.use(isAuthenticated);
 
-router.post("/", validateClubCreate,upload.single('logo'), createClub);
+router.post("/",upload.single('logo'), createClub);
 router.get("/my", getMyClubs);
 router.get('/mys',getMyClubsV2)
 router.get("/:clubId", commonValidations.objectId("clubId"), getClubById);
