@@ -4,7 +4,7 @@ import { Task } from '../models/task.model.js';
 // Create a new task
 export const createTask = catchAsync(async (req, res) => {
   const { title, dueDate, status, event, assignedTo } = req.body;
-console.log(req.body);
+
 
   if (!title || !event) {
     throw new AppError("Validation failed: title and event are required", 400);

@@ -5,7 +5,7 @@ import { startOfYear } from "date-fns";
 export const createBudget = catchAsync(async (req,res)=>{
   const { title, type, amount, category } = req.body;
     const { clubId } = req.params;
-    console.log(clubId);
+    
     
     const createdBy = req.user.id;
     if(!title || !type || !amount ||!clubId){

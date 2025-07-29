@@ -10,8 +10,8 @@ export const generateToken = (res, user, message) => {
     .cookie("token", token, {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
-      sameSite: "lax",
-      maxAge:7* 24 * 60 * 60 * 1000, // 1 day
+      sameSite: "None",
+      maxAge:7* 24 * 60 * 60 * 1000, // 7 day
     })
     .json({
       success: true,
