@@ -10,7 +10,7 @@ const budgetSchema = new mongoose.Schema({
   amount: { type: Number, required: true },
   category: { type: String }, // e.g. design, logistics, etc.
   event: { type: mongoose.Schema.Types.ObjectId, ref: "Event" }, // optional
-  clubId: { type: String, required: true },
+  clubId: { type: mongoose.Schema.Types.ObjectId, ref: "Club",  required: true },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 }, { timestamps: true });
 

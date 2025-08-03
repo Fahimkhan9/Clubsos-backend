@@ -1,6 +1,7 @@
 import { AppError, catchAsync } from '../middleware/error.middleware.js';
 import { Budget } from '../models/Budget.model.js';
 import { startOfYear } from "date-fns";
+import mongoose from 'mongoose';
 // Create a budget entry
 export const createBudget = catchAsync(async (req,res)=>{
   const { title, type, amount, category } = req.body;
@@ -18,6 +19,7 @@ export const createBudget = catchAsync(async (req,res)=>{
 // Get all budget items for a club
 export const getClubBudgets = catchAsync(async (req, res) => {
   const { clubId } = req.params;
+ 
   const { startDate, endDate, year } = req.query;
 
   const query = { clubId };
@@ -37,41 +39,37 @@ export const getClubBudgets = catchAsync(async (req, res) => {
   }
 
   const budgets = await Budget.find(query)
-    .populate("createdBy", "name email");
+    .populate("createdBy", "name email avatar");
 
   res.json({ success: true, data: budgets });
 });
 
 // Get monthly/yearly summary
-export const getBudgetSummary = catchAsync(async (req,res)=>{
-   const { clubId } = req.params;
-    const { year, month } = req.query; // optional
+export const getBudgetSummary = catchAsync(async (req, res) => {
+  const { clubId } = req.params;
+  const { year, month } = req.query;
 
-    const filter = { club: clubId };
-    if (year && month) {
-      filter.createdAt = {
-        $gte: new Date(`${year}-${month}-01`),
-        $lt: new Date(`${year}-${parseInt(month) + 1}-01`)
-      };
-    } else if (year) {
-      filter.createdAt = {
-        $gte: new Date(`${year}-01-01`),
-        $lt: new Date(`${parseInt(year) + 1}-01-01`)
-      };
-    }
+  const filter = { clubId: clubId };
 
-    const budgets = await Budget.find(filter);
-    const summary = budgets.reduce((acc, item) => {
-      acc[item.type] += item.amount;
+  
+
+  const budgets = await Budget.find(filter);
+  
+  const summary = budgets.reduce(
+    (acc, item) => {
+      const type = item.type === "expense" ? "expense" : "income";
+      acc[type] += item.amount;
       return acc;
-    }, { income: 0, expense: 0 });
+    },
+    { income: 0, expense: 0 }
+  );
 
-    res.json({ success: true, data: summary });
-})
+  res.json({ success: true, data: summary });
+});
 
 export const updateBudget=catchAsync(async (req,res)=>{
    const { id } = req.params;
-   const {clubId}=req.param
+   const {clubId}=req.params
   const { title, type, amount, category } = req.body;
 
   const budget = await Budget.findById(id);
@@ -96,49 +94,47 @@ export const deleteBudget =catchAsync(async (req,res)=>{
 })
 
 
-export const getMonthlyBudgetSummart=catchAsync(async (req,res)=>{
-   const clubId = req.params.id;
+export const getMonthlyBudgetSummary = catchAsync(async (req, res) => {
+  const { clubId } = req.params;
 
-    const currentYear = new Date().getFullYear();
-    const start = startOfYear(new Date(currentYear, 0, 1));
+  const currentYear = new Date().getFullYear();
+  const start = startOfYear(new Date(currentYear, 0, 1));
 
-    const records = await Budget.aggregate([
-      {
-        $match: {
-          club: clubId,
-          createdAt: { $gte: start },
-        },
+  const records = await Budget.aggregate([
+    {
+      $match: {
+        clubId: new mongoose.Types.ObjectId(clubId),
+        createdAt: { $gte: start },
       },
-      {
-        $project: {
-          month: { $month: "$createdAt" },
-          amount: 1,
-          type: 1,
-        },
+    },
+    {
+      $project: {
+        month: { $month: "$createdAt" },
+        amount: 1,
+        type: 1,
       },
-      {
-        $group: {
-          _id: { month: "$month", type: "$type" },
-          total: { $sum: "$amount" },
-        },
+    },
+    {
+      $group: {
+        _id: { month: "$month", type: "$type" },
+        total: { $sum: "$amount" },
       },
-    ]);
+    },
+  ]);
 
-    // Format into: { Jan: { income: ..., expense: ... }, ... }
-    const monthMap = {};
+  const monthMap = {};
+  for (let i = 1; i <= 12; i++) {
+    const monthName = new Date(0, i - 1).toLocaleString("default", { month: "short" });
+    monthMap[i] = { month: monthName, income: 0, expense: 0 };
+  }
 
-    for (let i = 1; i <= 12; i++) {
-      const monthName = new Date(0, i - 1).toLocaleString("default", { month: "short" });
-      monthMap[i] = { month: monthName, income: 0, expense: 0 };
-    }
+  records.forEach((r) => {
+    const m = monthMap[r._id.month];
+    if (r._id.type === "income") m.income = r.total;
+    else if (r._id.type === "expense") m.expense = r.total;
+  });
 
-    records.forEach((r) => {
-      const m = monthMap[r._id.month];
-      if (r._id.type === "income") m.income = r.total;
-      if (r._id.type === "expense") m.expense = r.total;
-    });
+  const result = Object.values(monthMap);
 
-    const result = Object.values(monthMap);
-
-    res.status(200).json({ success: true, data: result });
-})
+  res.status(200).json({ success: true, data: result });
+});
