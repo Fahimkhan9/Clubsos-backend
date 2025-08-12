@@ -86,7 +86,10 @@ export const authenticateUser = catchAsync(async (req, res) => {
  * @route POST /api/v1/users/signout
  */
 export const signOutUser = catchAsync(async (_, res) => {
-  res.cookie("token", "", { maxAge: 0 });
+  res.cookie("token", "", { secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      sameSite: "None",
+      maxAge:0, });
   res.status(200).json({
     success: true,
     message: "Signed out successfully",
