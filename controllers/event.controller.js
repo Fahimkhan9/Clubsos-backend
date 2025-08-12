@@ -36,17 +36,18 @@ export const createEvent = catchAsync(async (req, res) => {
 
 });
 
-// 📌 Get All Events for a Club
+
+// 📌 Get All Active Events for a Club
 export const getClubEvents = catchAsync(async (req, res) => {
   const { clubId } = req.params;
 
-  const events = await Event.find({ club: clubId })
+  const events = await Event.find({ club: clubId, isArchived: false })
     .populate("organizers", "name email")
     .sort({ date: -1 });
 
-
   res.json({ success: true, data: events });
 });
+
 
 // 📌 Get a Single Event by ID
 export const getEventById = catchAsync(async (req, res) => {
@@ -94,3 +95,22 @@ export const getUpcomingEvents = catchAsync(async (req, res) => {
 
   res.status(200).json({ success: true, data: events });
 });
+
+// 📌 Get Archived Events
+export const getArchivedEvents = catchAsync(async (req, res) => {
+  const { clubId } = req.params;
+
+  const events = await Event.find({ club: clubId, isArchived: true })
+    .populate("organizers", "name email")
+    .sort({ date: -1 });
+
+  res.json({ success: true, data: events });
+});
+// set event to archived
+export const archieveEvent = catchAsync(async (req, res) => {
+  const { id } = req.params;
+
+  const event = await Event.findByIdAndUpdate(id, { isArchived: true }, { new: true });
+  if (!event) return res.status(404).json({ success: false, message: "Event not found" });  
+  res.json({ success: true, data: event });
+})

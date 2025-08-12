@@ -1,14 +1,13 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const eventSchema = new mongoose.Schema({
+const eventArchiveSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: String,
   date: { type: Date, required: true },
-  isArchived: { type: Boolean, default: false },
   type: {
     type: String,
     enum: ["seminar", "workshop", "competition", "other"],
-    default: "other"
+    default: "other",
   },
   club: { type: mongoose.Schema.Types.ObjectId, ref: "Club", required: true },
   organizers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
@@ -20,5 +19,5 @@ const eventSchema = new mongoose.Schema({
     },
   ],
 }, { timestamps: true });
-eventSchema.index({ date: 1, isArchived: 1 });
-export const Event = mongoose.model('Event', eventSchema);
+
+export const EventArchive = mongoose.model("EventArchive", eventArchiveSchema);

@@ -4,7 +4,7 @@ import { AppError } from "../middleware/error.middleware.js";
 import { catchAsync } from "../middleware/error.middleware.js";
 import { deleteMediaFromCloudinary, uploadMedia } from "../utils/cloudinary.js";
 import { User } from "../models/user.model.js";
-
+import {sendEmail} from '../utils/sendForgotEmail.js'
 export const getMyClubsV2 = catchAsync(async (req, res) => {
   // Find clubs where the current user is a member
   const clubs = await Club.find({ "members.user": req.id }).populate({
@@ -244,7 +244,8 @@ export const inviteMemberToClub = catchAsync(async (req, res) => {
   
   // await sendInviteEmail(email, invite.inviteToken);
   const inviteLink=`${process.env.CLIENT_URL}/accept?token=${invite.inviteToken}`
-
+  
+  await sendEmail(email, `You're invited to join a club on ClubOS`, `<p>You have been invited to join a club. Click <a href="${inviteLink}">here</a> to sign up and join.</p>`);
 
   res.status(200).json({
     success: true,

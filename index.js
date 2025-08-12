@@ -9,7 +9,7 @@ import xss from "xss-clean";
 import hpp from "hpp";
 import rateLimit from "express-rate-limit";
 import connectDB from "./database/db.js";
-
+import "./jobs/archiveEvents.job.js"; 
 
 // Load environment variables
 dotenv.config();
