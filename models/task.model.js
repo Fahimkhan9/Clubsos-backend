@@ -9,7 +9,7 @@ const taskSchema = new mongoose.Schema({
     enum: ["pending", "in_progress", "done"],
     default: "pending",
   },
-  event: { type: mongoose.Schema.Types.ObjectId, ref: "Event", required: true },
+  event: { type: mongoose.Schema.Types.ObjectId, ref: "Event" },
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 }, { timestamps: true });

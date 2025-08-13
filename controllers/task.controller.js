@@ -1,20 +1,38 @@
 import { AppError, catchAsync } from '../middleware/error.middleware.js';
 import { Task } from '../models/task.model.js';
-
+import mongoose from 'mongoose';
 // Create a new task
 export const createTask = catchAsync(async (req, res) => {
   const { title, dueDate, status, event, assignedTo } = req.body;
 
-
-  if (!title || !event) {
-    throw new AppError("Validation failed: title and event are required", 400);
+  if (!title) {
+    throw new AppError("Validation failed: title is required", 400);
   }
 
   const assignedBy = req.user._id;
 
-  const task = await Task.create({ title, dueDate, status, event, assignedTo, assignedBy });
+  const taskData = {
+    title,
+    dueDate,
+    status,
+    assignedTo,
+    assignedBy,
+  };
 
-  res.status(201).json({ success: true, data: task });
+  // Only add event if provided and valid
+  if (event) {
+    if (!mongoose.Types.ObjectId.isValid(event)) {
+      throw new AppError("Invalid event ID", 400);
+    }
+    taskData.event = event;
+  }
+
+  const task = await Task.create(taskData);
+
+  res.status(201).json({
+    success: true,
+    data: task,
+  });
 });
 
 // Get all tasks for a given event
