@@ -69,12 +69,13 @@ import attendanceRoutes from './routes/attendance.route.js';
 import taskRoute from './routes/task.route.js'
 import healthRoute from "./routes/health.routes.js";
 import announcementRoute from "./routes/announcement.route.js";
+import sessionRoute from "./routes/session.route.js";
 app.use("/api/v1/user", userRoute);
 app.use('/api/v1/club',clubRoute);
 app.use('/api/v1/attendance', attendanceRoutes);
 app.use('/api/v1/tasks', taskRoute);
 app.use("/api/v1/announcements", announcementRoute);
-
+app.use('/api/v1/sessions',sessionRoute);
 app.use("/health", healthRoute);
 
 // 404 Handler

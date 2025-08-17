@@ -68,7 +68,6 @@ export const createUserAccount = catchAsync(async (req, res) => {
 export const authenticateUser = catchAsync(async (req, res) => {
   const { email, password } = req.body;
 
-  // Find user and check password
   const user = await User.findOne({ email: email.toLowerCase() }).select(
     "+password"
   );
@@ -76,9 +75,8 @@ export const authenticateUser = catchAsync(async (req, res) => {
     throw new AppError("Invalid email or password", 401);
   }
 
-  // Update last active and generate token
   await user.updateLastActive();
-  generateToken(res, user._id, `Welcome back ${user.name}`);
+  await generateToken(res, user, req, `Welcome back ${user.name}`);
 });
 
 /**
@@ -88,7 +86,7 @@ export const authenticateUser = catchAsync(async (req, res) => {
 export const signOutUser = catchAsync(async (_, res) => {
   res.cookie("token", "", { secure: process.env.NODE_ENV === "production",
       httpOnly: true,
-      sameSite: "None",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "lax",
       maxAge:0, });
   res.status(200).json({
     success: true,

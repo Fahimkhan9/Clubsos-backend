@@ -4,33 +4,35 @@ import jwt from "jsonwebtoken";
 import { AppError } from "./error.middleware.js";
 import { catchAsync } from "./error.middleware.js";
 import { User } from "../models/user.model.js";
-
+import { Session } from "../models/session.model.js";
 // Checks if user is logged in via token in cookies
 export const isAuthenticated = catchAsync(async (req, res, next) => {
   const token = req.cookies?.token;
-
-
-  if (!token) {
-    throw new AppError("You are not logged in. Please log in to get access.", 401);
-  }
+  if (!token) throw new AppError("You are not logged in", 401);
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     req.id = decoded.userId;
+
     const user = await User.findById(req.id);
-    if (!user) {
-      throw new AppError("User not found", 404);
-    }
+    if (!user) throw new AppError("User not found", 404);
+
+    // Check if session is valid
+    const session = await Session.findOne({ user: req.id, token, valid: true });
+    if (!session) throw new AppError("Session expired. Please login again.", 401);
 
     req.user = user;
+    req.session = session;
+
+    // Update lastActive of session
+    session.lastActive = Date.now();
+    await session.save();
+
     next();
   } catch (error) {
-    if (error.name === "JsonWebTokenError") {
-      throw new AppError("Invalid token. Please log in again.", 401);
-    } else if (error.name === "TokenExpiredError") {
-      throw new AppError("Your token has expired. Please log in again.", 401);
-    }
+    if (error.name === "JsonWebTokenError") throw new AppError("Invalid token", 401);
+    else if (error.name === "TokenExpiredError")
+      throw new AppError("Token expired", 401);
     throw error;
   }
 });
