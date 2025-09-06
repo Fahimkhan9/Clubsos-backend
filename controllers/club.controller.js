@@ -179,7 +179,7 @@ export const inviteMemberToClub = catchAsync(async (req, res) => {
   const { email, role, designation } = req.body;
   const { clubId } = req.params;
 
-  // Validate role is one of allowed roles
+  // Validate role
   const validRoles = ["admin", "moderator", "member"];
   if (!validRoles.includes(role)) {
     throw new AppError("Invalid role specified", 400);
@@ -194,7 +194,7 @@ export const inviteMemberToClub = catchAsync(async (req, res) => {
   // Check if user with email exists
   const user = await User.findOne({ email: email.toLowerCase() });
   if (user) {
-    // Check if already member
+    // Already a member?
     const alreadyMember = club.members.some(
       (m) => m.user.toString() === user._id.toString()
     );
@@ -202,7 +202,7 @@ export const inviteMemberToClub = catchAsync(async (req, res) => {
       throw new AppError("User is already a member of this club", 400);
     }
 
-    // Add user as member in club
+    // Add to club + user
     club.members.push({
       user: user._id,
       role,
@@ -211,7 +211,6 @@ export const inviteMemberToClub = catchAsync(async (req, res) => {
     });
     await club.save();
 
-    // Add club to user's clubs array if not already present
     if (!user.clubs.includes(club._id)) {
       user.clubs.push(club._id);
       await user.save();
@@ -223,9 +222,7 @@ export const inviteMemberToClub = catchAsync(async (req, res) => {
     });
   }
 
-  // User not found, create an invite
-
-  // Check if invite already exists and valid
+  // User not found → send invite
   const existingInvite = await Invite.findOne({
     email: email.toLowerCase(),
     clubId,
@@ -236,16 +233,22 @@ export const inviteMemberToClub = catchAsync(async (req, res) => {
     throw new AppError("An invitation is already pending for this user", 400);
   }
 
-  // Create new invite
+  // Create invite entry
   const invite = await Invite.createInvite({ email, clubId, role, designation });
 
-  // Send invitation email with inviteToken
-  console.log(`Invitation sent to ${email} with token: ${invite.inviteToken}`);
-  
-  // await sendInviteEmail(email, invite.inviteToken);
-  const inviteLink=`${process.env.CLIENT_URL}/accept?token=${invite.inviteToken}`
-  
-  await sendEmail(email, `You're invited to join a club on ClubOS`, `<p>You have been invited to join a club. Click <a href="${inviteLink}">here</a> to sign up and join.</p>`);
+  const inviteLink = `${process.env.CLIENT_URL}/accept?token=${invite.inviteToken}`;
+
+  try {
+    await sendEmail(
+      email,
+      `You're invited to join a club on ClubOS`,
+      `<p>You have been invited to join a club. Click <a href="${inviteLink}">here</a> to sign up and join.</p>`
+    );
+  } catch (err) {
+    // Rollback if email fails
+    await Invite.findByIdAndDelete(invite._id);
+    throw new AppError("Failed to send invitation email. Please try again.", 500);
+  }
 
   res.status(200).json({
     success: true,
@@ -253,6 +256,7 @@ export const inviteMemberToClub = catchAsync(async (req, res) => {
     inviteLink,
   });
 });
+
 
 /**
  * Accept an invitation to join a club
@@ -410,6 +414,7 @@ export const updateMemberRole = catchAsync(async (req, res) => {
   }
 
   // Find member to update
+
   const member = club.members.find(
     (m) => m.user.toString() === memberId.toString()
   );
@@ -417,7 +422,7 @@ export const updateMemberRole = catchAsync(async (req, res) => {
     throw new AppError("Member not found in this club", 404);
   }
 
-  // Prevent demoting last admin (optional)
+  // Prevent demoting last admin
   if (member.role === "admin" && role !== "admin") {
     // Check if there is another admin
     const otherAdmins = club.members.filter(
